@@ -1,0 +1,73 @@
+BackendTaskDefinition:
+  Type: 'AWS::ECS::TaskDefinition'
+  Properties:
+    Family: !Sub '${ProjectName}-${Environment}-backend'
+    NetworkMode: 'bridge'
+    RequiresCompatibilities:
+      - 'EC2'
+    ExecutionRoleArn: !Ref ECSTaskExecutionRole
+    TaskRoleArn: !Ref ECSTaskRole
+    ContainerDefinitions:
+      - Name: 'backend'
+        Image: !Ref BackendImageUri
+        Essential: true
+        Cpu: 256
+        Memory: 512
+        PortMappings:
+          - ContainerPort: 8000
+            Protocol: tcp
+        Environment:
+          - Name: NODE_ENV
+            Value: !Ref Environment
+          - Name: PORT
+            Value: '8000'
+          - Name: DB_HOST
+            Value: !Ref DatabaseEndpoint
+          - Name: DB_PORT
+            Value: '5432'
+          - Name: DB_NAME
+            Value: 'tradingedge'
+          - Name: DB_USER
+            Value: !Ref DatabaseUsername
+          - Name: DB_PASSWORD
+            Value: !Ref DatabasePassword
+          - Name: MARKET_DATA_API_KEY
+            Value: !Ref MarketDataApiKey
+        LogConfiguration:
+          LogDriver: 'awslogs'
+          Options:
+            awslogs-group: !Sub '/ecs/${ProjectName}-${Environment}-backend'
+            awslogs-region: !Ref 'AWS::Region'
+            awslogs-stream-prefix: 'ecs'
+        HealthCheck:
+          Command:
+            - 'CMD-SHELL'
+            - 'curl -f http://localhost:8000/health || exit 1'
+          Interval: 30
+          Timeout: 5
+          Retries: 3
+          StartPeriod: 60
+
+BackendService:
+  Type: 'AWS::ECS::Service'
+  DependsOn: ALBListener
+  Properties:
+    ServiceName: !Sub '${ProjectName}-${Environment}-backend'
+    Cluster: 
+      Fn::ImportValue: !Sub '${ProjectName}-${Environment}-cluster-name'
+    TaskDefinition: !Ref BackendTaskDefinition
+    DesiredCount: 1
+    LaunchType: 'EC2'
+    LoadBalancers:
+      - ContainerName: 'backend'
+        ContainerPort: 8000
+        TargetGroupArn: !Ref BackendTargetGroup
+    DeploymentConfiguration:
+      MaximumPercent: 200
+      MinimumHealthyPercent: 50
+      DeploymentCircuitBreaker:
+        Enable: true
+        Rollback: true
+    Tags:
+      - Key: Name
+        Value: !Sub '${ProjectName}-${Environment}-backend-service'

@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# TradingEdge Analytics Platform - Deployment Script (with Secrets Manager)
-# Author: AWS Solutions Architect (refactored for secure secret handling)
+# TradingEdge Analytics Platform - Deployment Script
+# Author: AWS Solutions Architect (Refactored for EC2 launch type)
 
 set -e  # Exit on any error
 
@@ -23,9 +23,9 @@ print_success()  { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
 print_warning()  { echo -e "${YELLOW}[WARNING]${NC} $1"; }
 print_error()    { echo -e "${RED}[ERROR]${NC} $1"; }
 
-# -----------------------------
-# Check AWS CLI
-# -----------------------------
+exec > >(tee -i deploy.log)
+exec 2>&1
+
 check_aws_cli() {
     print_status "Checking AWS CLI..."
     if ! command -v aws &> /dev/null; then
@@ -42,13 +42,20 @@ check_aws_cli() {
     print_success "AWS CLI configured. Account ID: $ACCOUNT_ID"
 }
 
-# -----------------------------
-# Gather Parameters & Store Secrets
-# -----------------------------
+validate_template() {
+    TEMPLATE_PATH=$1
+    print_status "Validating template: $TEMPLATE_PATH"
+    aws cloudformation validate-template \
+      --template-body file://$TEMPLATE_PATH \
+      --region $AWS_REGION || {
+        print_error "Template validation failed: $TEMPLATE_PATH"
+        exit 1
+    }
+}
+
 get_parameters() {
     print_status "Gathering deployment parameters..."
 
-    # DB Secret
     read -s -p "Enter database password (8-41 chars): " DB_PASSWORD
     echo
     if [ ${#DB_PASSWORD} -lt 8 ] || [ ${#DB_PASSWORD} -gt 41 ]; then
@@ -56,7 +63,6 @@ get_parameters() {
         exit 1
     fi
 
-    # GitHub info
     read -p "Enter GitHub owner/org: " GITHUB_OWNER
     read -p "Enter GitHub repo name: " GITHUB_REPO
     read -p "Enter GitHub branch [main]: " GITHUB_BRANCH
@@ -64,37 +70,41 @@ get_parameters() {
     read -s -p "Enter GitHub Personal Access Token: " GITHUB_TOKEN
     echo
 
-    # Optional Market Data API Key
     read -p "Enter Market Data API Key [demo-key]: " MARKET_API_KEY
     MARKET_API_KEY=${MARKET_API_KEY:-demo-key}
 
-    # Secret names
     DB_SECRET_NAME="${STACK_PREFIX}-db-secret"
     GITHUB_SECRET_NAME="${STACK_PREFIX}-github-secret"
 
     print_status "Storing secrets in AWS Secrets Manager..."
 
     # DB Secret
-    aws secretsmanager create-secret \
-      --name "$DB_SECRET_NAME" \
-      --description "Database password for $STACK_PREFIX" \
-      --secret-string "{\"password\":\"$DB_PASSWORD\"}" \
-      --region $AWS_REGION >/dev/null 2>&1 || \
-    aws secretsmanager update-secret \
-      --secret-id "$DB_SECRET_NAME" \
-      --secret-string "{\"password\":\"$DB_PASSWORD\"}" \
-      --region $AWS_REGION >/dev/null
+    if aws secretsmanager describe-secret --secret-id "$DB_SECRET_NAME" --region $AWS_REGION &> /dev/null; then
+        aws secretsmanager update-secret \
+          --secret-id "$DB_SECRET_NAME" \
+          --secret-string "{\"password\":\"$DB_PASSWORD\"}" \
+          --region $AWS_REGION
+    else
+        aws secretsmanager create-secret \
+          --name "$DB_SECRET_NAME" \
+          --description "Database password for $STACK_PREFIX" \
+          --secret-string "{\"password\":\"$DB_PASSWORD\"}" \
+          --region $AWS_REGION
+    fi
 
     # GitHub Secret
-    aws secretsmanager create-secret \
-      --name "$GITHUB_SECRET_NAME" \
-      --description "GitHub token for $STACK_PREFIX" \
-      --secret-string "{\"token\":\"$GITHUB_TOKEN\"}" \
-      --region $AWS_REGION >/dev/null 2>&1 || \
-    aws secretsmanager update-secret \
-      --secret-id "$GITHUB_SECRET_NAME" \
-      --secret-string "{\"token\":\"$GITHUB_TOKEN\"}" \
-      --region $AWS_REGION >/dev/null
+    if aws secretsmanager describe-secret --secret-id "$GITHUB_SECRET_NAME" --region $AWS_REGION &> /dev/null; then
+        aws secretsmanager update-secret \
+          --secret-id "$GITHUB_SECRET_NAME" \
+          --secret-string "{\"token\":\"$GITHUB_TOKEN\"}" \
+          --region $AWS_REGION
+    else
+        aws secretsmanager create-secret \
+          --name "$GITHUB_SECRET_NAME" \
+          --description "GitHub token for $STACK_PREFIX" \
+          --secret-string "{\"token\":\"$GITHUB_TOKEN\"}" \
+          --region $AWS_REGION
+    fi
 
     DB_SECRET_ARN=$(aws secretsmanager describe-secret --secret-id "$DB_SECRET_NAME" --query ARN --output text --region $AWS_REGION)
     GITHUB_SECRET_ARN=$(aws secretsmanager describe-secret --secret-id "$GITHUB_SECRET_NAME" --query ARN --output text --region $AWS_REGION)
@@ -103,26 +113,27 @@ get_parameters() {
     print_success "GitHub Secret ARN: $GITHUB_SECRET_ARN"
 }
 
-# -----------------------------
-# Deploy Main Infrastructure
-# -----------------------------
 deploy_main_stack() {
+    validate_template infrastructure/main.yaml
     print_status "Deploying main infrastructure stack..."
     aws cloudformation deploy \
-        --template-file main-infrastructure.yaml \
+        --template-file infrastructure/main.yaml \
         --stack-name "${STACK_PREFIX}-main" \
         --parameter-overrides \
             ProjectName=$PROJECT_NAME \
             Environment=$ENVIRONMENT \
+            DatabaseUsername=tradingadmin \
+            DatabasePassword=$DB_PASSWORD \
             DatabaseSecretArn=$DB_SECRET_ARN \
         --capabilities CAPABILITY_NAMED_IAM \
+        --region $AWS_REGION
+
+    aws cloudformation wait stack-create-complete \
+        --stack-name "${STACK_PREFIX}-main" \
         --region $AWS_REGION
     print_success "Main stack deployed."
 }
 
-# -----------------------------
-# Build & Push Initial Images
-# -----------------------------
 build_initial_images() {
     print_status "Building & pushing initial container images..."
     ECR_URI=$(aws cloudformation describe-stacks \
@@ -143,10 +154,8 @@ build_initial_images() {
     print_success "Initial images pushed to ECR."
 }
 
-# -----------------------------
-# Deploy ECS Services
-# -----------------------------
 deploy_ecs_stack() {
+    validate_template infrastructure/ecs-services.yaml
     print_status "Deploying ECS services stack..."
     DB_ENDPOINT=$(aws cloudformation describe-stacks \
         --stack-name "${STACK_PREFIX}-main" \
@@ -159,7 +168,7 @@ deploy_ecs_stack() {
         --output text --region $AWS_REGION)
 
     aws cloudformation deploy \
-        --template-file ecs-services.yaml \
+        --template-file infrastructure/ecs-services.yaml \
         --stack-name "${STACK_PREFIX}-ecs" \
         --parameter-overrides \
             ProjectName=$PROJECT_NAME \
@@ -171,16 +180,18 @@ deploy_ecs_stack() {
             MarketDataApiKey="$MARKET_API_KEY" \
         --capabilities CAPABILITY_NAMED_IAM \
         --region $AWS_REGION
+
+    aws cloudformation wait stack-create-complete \
+        --stack-name "${STACK_PREFIX}-ecs" \
+        --region $AWS_REGION
     print_success "ECS services deployed."
 }
 
-# -----------------------------
-# Deploy CI/CD Pipeline
-# -----------------------------
 deploy_cicd_stack() {
+    validate_template infrastructure/cicd-pipeline.yaml
     print_status "Deploying CI/CD pipeline..."
     aws cloudformation deploy \
-        --template-file cicd-pipeline.yaml \
+        --template-file infrastructure/cicd-pipeline.yaml \
         --stack-name "${STACK_PREFIX}-cicd" \
         --parameter-overrides \
             ProjectName=$PROJECT_NAME \
@@ -191,14 +202,16 @@ deploy_cicd_stack() {
             GitHubSecretArn=$GITHUB_SECRET_ARN \
         --capabilities CAPABILITY_NAMED_IAM \
         --region $AWS_REGION
+
+    aws cloudformation wait stack-create-complete \
+        --stack-name "${STACK_PREFIX}-cicd" \
+        --region $AWS_REGION
     print_success "CI/CD pipeline deployed."
 }
 
-# -----------------------------
-# Show Deployment Info
-# -----------------------------
 show_deployment_info() {
     print_success "=== DEPLOYMENT COMPLETE ==="
+    
     ALB_DNS=$(aws cloudformation describe-stacks \
         --stack-name "${STACK_PREFIX}-main" \
         --query "Stacks[0].Outputs[?OutputKey=='ApplicationLoadBalancerDNS'].OutputValue" \
@@ -206,58 +219,29 @@ show_deployment_info() {
 
     PIPELINE_URL=$(aws cloudformation describe-stacks \
         --stack-name "${STACK_PREFIX}-cicd" \
-        --query "Stacks[0].Outputs[?OutputKey=='PipelineUrl'].OutputValue" \
+        --query "Stacks[0].Outputs[?OutputKey=='PipelineConsoleUrl'].OutputValue" \
         --output text --region $AWS_REGION)
 
-    echo "🌐 App URL: http://$ALB_DNS"
-    echo "🔧 CI/CD Pipeline: $PIPELINE_URL"
-    echo "📊 CloudWatch Logs: https://console.aws.amazon.com/cloudwatch/home?region=$AWS_REGION#logsV2:log-groups"
-    echo "🐳 ECR Repo: https://console.aws.amazon.com/ecr/repositories/$PROJECT_NAME-$ENVIRONMENT?region=$AWS_REGION"
+    echo -e "\n${GREEN}Access your application at:${NC} http://${ALB_DNS}"
+    echo -e "${GREEN}View your CI/CD pipeline at:${NC} ${PIPELINE_URL}"
+    echo -e "${BLUE}CloudWatch Logs:${NC} https://console.aws.amazon.com/cloudwatch/home?region=${AWS_REGION}#logsV2:log-groups"
+    echo -e "${BLUE}ECR Repo:${NC} https://console.aws.amazon.com/ecr/repositories/${PROJECT_NAME}-${ENVIRONMENT}?region=${AWS_REGION}"
     print_warning "App may take 5–10 mins to become available."
-}
+}  # ✅ This closes the function
 
 # -----------------------------
-# Cleanup Resources
-# -----------------------------
-cleanup() {
-    print_warning "Deleting ALL resources..."
-    read -p "Type 'yes' to confirm: " CONFIRM
-    if [ "$CONFIRM" = "yes" ]; then
-        aws cloudformation delete-stack --stack-name "${STACK_PREFIX}-cicd" --region $AWS_REGION
-        aws cloudformation wait stack-delete-complete --stack-name "${STACK_PREFIX}-cicd" --region $AWS_REGION
-        aws cloudformation delete-stack --stack-name "${STACK_PREFIX}-ecs" --region $AWS_REGION
-        aws cloudformation wait stack-delete-complete --stack-name "${STACK_PREFIX}-ecs" --region $AWS_REGION
-        aws cloudformation delete-stack --stack-name "${STACK_PREFIX}-main" --region $AWS_REGION
-        aws cloudformation wait stack-delete-complete --stack-name "${STACK_PREFIX}-main" --region $AWS_REGION
-
-        # Delete secrets
-        aws secretsmanager delete-secret --secret-id "${STACK_PREFIX}-db-secret" --force-delete-without-recovery --region $AWS_REGION
-        aws secretsmanager delete-secret --secret-id "${STACK_PREFIX}-github-secret" --force-delete-without-recovery --region $AWS_REGION
-
-        print_success "Cleanup complete."
-    else
-        print_status "Cleanup cancelled."
-    fi
-}
-
-# -----------------------------
-# Main Function
+# Main Execution Flow
 # -----------------------------
 main() {
     echo "==============================================="
-    echo "🚀 TradingEdge Analytics Platform Deployment"
+    echo "🚀 Starting TradingEdge Analytics Deployment"
     echo "==============================================="
-
-    if [ "$1" = "--cleanup" ]; then
-        cleanup
-        exit 0
-    fi
 
     check_aws_cli
     get_parameters
 
     read -p "Continue with deployment? (y/N): " CONFIRM
-    if [ "$CONFIRM" != "y" ] && [ "$CONFIRM" != "Y" ]; then
+    if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]; then
         print_status "Deployment cancelled."
         exit 0
     fi
@@ -269,4 +253,4 @@ main() {
     show_deployment_info
 }
 
-main "$@"
+main "$@"  # ✅ This triggers the script

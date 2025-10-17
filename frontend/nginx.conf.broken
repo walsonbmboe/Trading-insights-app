@@ -1,0 +1,73 @@
+# frontend/nginx.conf
+# Global settings
+events {
+    # Maximum number of simultaneous connections per worker process
+    worker_connections 1024;
+}
+
+http {
+    # Include MIME types for proper file serving
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+    
+    # Logging format
+    log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+                    '$status $body_bytes_sent "$http_referer" '
+                    '"$http_user_agent" "$http_x_forwarded_for"';
+    
+    # Access log
+    access_log /var/log/nginx/access.log main;
+    error_log /var/log/nginx/error.log warn;
+    
+    # Gzip compression for better performance
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_comp_level 6;
+    gzip_types text/plain text/css text/xml text/javascript
+               application/javascript application/xml+rss
+               application/json application/xml;
+    
+    # Server block
+    server {
+        # Listen on port 80
+        listen 80;
+        server_name localhost;
+        
+        # Document root - where our React build files are located
+        root /usr/share/nginx/html;
+        index index.html;
+        
+        # Security headers
+        add_header X-Frame-Options "SAMEORIGIN" always;
+        add_header X-XSS-Protection "1; mode=block" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        
+        # Main location block for React Router
+        location / {
+            # Try to serve request as file, then as directory,
+            # then fallback to index.html for React Router
+            try_files $uri $uri/ /index.html;
+            # Cache static assets
+            expires 1h;
+            add_header Cache-Control "public, immutable";
+        }
+        
+        # Health check endpoint for load balancers
+        location /health {
+            return 200 "healthy\n";
+            add_header Content-Type text/plain;
+        }
+        
+        # Cache static assets aggressively
+        location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+            expires 1y;
+            add_header Cache-Control "public, immutable";
+        }
+        
+        # Security: deny access to hidden files
+        location ~ /\. {
+            deny all;
+        }
+    }
+}

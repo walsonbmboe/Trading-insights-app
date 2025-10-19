@@ -10,6 +10,7 @@ import pkg from "pg";
 dotenv.config(); // Load env before using it
 
 const { Pool } = pkg;
+
 const pool = new Pool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -20,7 +21,30 @@ const pool = new Pool({
 });
 
 const app = express();
+
+// ✅ Use fallback port to avoid EADDRINUSE
 const PORT = process.env.PORT || 5000;
+
+// ✅ Graceful port conflict handling
+function startServer(port) {
+  app.listen(port, () => {
+    console.log(`🚀 Trading Insights API running on port ${port}`);
+    console.log(`🏥 Health check available at http://localhost:${port}/health`);
+    console.log(`📊 Market data endpoint: http://localhost:${port}/api/market-data`);
+    console.log(`💡 Recommendations endpoint: http://localhost:${port}/api/recommendations`);
+  }).on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`❌ Port ${port} is already in use. Trying ${port + 1}...`);
+      startServer(port + 1); // Retry with next port
+    } else {
+      throw err;
+    }
+  });
+}
+
+// ✅ Start the server with fallback logic
+startServer(PORT);
+
 
 
 // Middleware

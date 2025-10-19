@@ -999,7 +999,6 @@ app.listen(PORT, () => {
   });
 
 
-const dbpool = require('./config/database');
 
 // Test database connection
 async function testDatabaseConnection() {

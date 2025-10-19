@@ -998,7 +998,6 @@ app.listen(PORT, () => {
   console.log(`💡 Recommendations endpoint: http://localhost:${PORT}/api/recommendations`);
   });
 
-module.exports = app;
 
 const dbpool = require('./config/database');
 

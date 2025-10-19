@@ -1015,12 +1015,6 @@ cron.schedule('*/5 * * * *', () => {
 updateMarketData();
 updateRecommendations();
 
-app.listen(PORT, () => {
-  console.log(`🚀 Trading Insights API running on port ${PORT}`);
-  console.log(`🏥 Health check available at http://localhost:${PORT}/health`);
-  console.log(`📊 Market data endpoint: http://localhost:${PORT}/api/market-data`);
-  console.log(`💡 Recommendations endpoint: http://localhost:${PORT}/api/recommendations`);
-  });
 
 
 // Test database connection
@@ -1046,10 +1040,6 @@ async function testDatabaseConnection() {
   }
 }
 
-app.listen(PORT, () => {
-  console.log(`🚀 Trading Insights API running on port ${PORT}`);
-  console.log(`🏥 Health check available at http://localhost:${PORT}/health`);
-});
 
 testDatabaseConnection();
 export default app;

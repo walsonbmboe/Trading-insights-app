@@ -1,26 +1,23 @@
-// backend/server.js
-// backend/server.js
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import bodyParser from "body-parser";
 import helmet from "helmet";
 import morgan from "morgan";
+import cron from "node-cron";
 import pkg from "pg";
+
+dotenv.config(); // Load env before using it
+
 const { Pool } = pkg;
-
 const pool = new Pool({
-  host: process.env.DB_HOST || "localhost",
-  user: process.env.DB_USER || "tradingadmin",
-  password: process.env.DB_PASSWORD || "17051952Mw!baiye",
-  database: process.env.DB_NAME || "tradingedge",
-  port: 5432,
-  ssl: false // This disables SSL
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  port: process.env.DB_PORT || 5432,
+  ssl: { rejectUnauthorized: false }
 });
-
-
-// Load environment variables
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -909,49 +906,6 @@ app.get('/api/stocks', async (req, res) => {
 });
 
 
-    // Fetch stocks from database instead of mock data
-    const client = await pool.connect();
-    const result = await client.query(`
-      SELECT 
-        symbol,
-        name as company,
-        price::decimal as price,
-        change_percent as change,
-        volume::bigint as volume,
-        market_cap::bigint as marketCap,
-        pe_ratio::decimal as peRatio,
-        'BUY' as action,
-        85 as confidence,
-        'Database recommendation' as reason,
-        (price * 1.15)::decimal as targetPrice,
-        price as previousClose
-      FROM trading.stocks 
-      ORDER BY market_cap DESC
-      LIMIT 50
-    `);
-    
-    client.release();
-    
-    try {
-  res.json({
-    success: true,
-    data: result.rows,
-    lastUpdated: new Date().toISOString(),
-    count: result.rows.length
-  });
-} catch (error) {
-  console.error('Error fetching recommendations from database:', error);
-
-  // Fallback to mock data if database fails
-  res.json({
-    success: true,
-    data: stockRecommendations, // Your existing mock data as fallback
-    lastUpdated: new Date().toISOString(),
-    source: 'fallback'
-  });
-}
-
-
 app.get('/api/stocks', async (req, res) => {
   try {
     const client = await pool.connect();
@@ -1050,28 +1004,31 @@ const dbpool = require('./config/database');
 
 // Test database connection
 async function testDatabaseConnection() {
-    try {
-        const client = await pool.connect();
-        console.log('✅ Database connected successfully!');
-        
-        // Check what databases exist
-        const result = await client.query('SELECT datname FROM pg_database WHERE datistemplate = false;');
-        console.log('📋 Available databases:', result.rows);
-        
-        client.release();
-    } catch (error) {
-        console.error('❌ Database connection failed:', error.message);
-        
-        // Common issues and solutions
-        if (error.message.includes('password authentication failed')) {
-            console.log('💡 Try: Check your password in .env file');
-        } else if (error.message.includes('database') && error.message.includes('does not exist')) {
-            console.log('💡 Try: Different database name (postgres, tradingedge, etc.)');
-        } else if (error.message.includes('timeout')) {
-            console.log('💡 Try: Check VPC security groups allow port 5432');
-        }
+  try {
+    const client = await pool.connect();
+    console.log('✅ Database connected successfully!');
+
+    const result = await client.query('SELECT datname FROM pg_database WHERE datistemplate = false;');
+    console.log('📋 Available databases:', result.rows);
+
+    client.release();
+  } catch (error) {
+    console.error('❌ Database connection failed:', error.message);
+
+    if (error.message.includes('password authentication failed')) {
+      console.log('💡 Try: Check your password in .env file');
+    } else if (error.message.includes('database') && error.message.includes('does not exist')) {
+      console.log('💡 Try: Different database name (postgres, tradingedge, etc.)');
+    } else if (error.message.includes('timeout')) {
+      console.log('💡 Try: Check VPC security groups allow port 5432');
     }
+  }
 }
 
-// Call the test function
+app.listen(PORT, () => {
+  console.log(`🚀 Trading Insights API running on port ${PORT}`);
+  console.log(`🏥 Health check available at http://localhost:${PORT}/health`);
+});
+
 testDatabaseConnection();
+export default app;

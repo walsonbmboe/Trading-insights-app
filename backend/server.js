@@ -20,7 +20,7 @@ const pool = new Pool({
 });
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 
 // Middleware
@@ -997,7 +997,6 @@ app.listen(PORT, () => {
   console.log(`📊 Market data endpoint: http://localhost:${PORT}/api/market-data`);
   console.log(`💡 Recommendations endpoint: http://localhost:${PORT}/api/recommendations`);
   });
-
 
 
 // Test database connection

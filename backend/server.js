@@ -987,6 +987,30 @@ app.get('/api/analytics', (req, res) => {
   }
 });
 
+// ✅ Added for API Gateway integration
+app.get('/trades', async (req, res) => {
+  try {
+    const client = await pool.connect();
+    const result = await client.query(`
+      SELECT * FROM trades
+      ORDER BY trade_date DESC
+    `);
+    client.release();
+    res.json({
+      success: true,
+      data: result.rows,
+      count: result.rows.length
+    });
+  } catch (error) {
+    console.error('Error fetching trades from database:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch trades',
+      error: error.message
+    });
+  }
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);

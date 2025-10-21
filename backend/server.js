@@ -909,33 +909,8 @@ app.get('/api/stocks', async (req, res) => {
   try {
     const client = await pool.connect();
     const result = await client.query(`
-      SELECT * FROM stocks
-      ORDER BY market_cap DESC
-    `);
-    client.release();
-    res.json({
-      success: true,
-      data: result.rows,
-      count: result.rows.length
-    });
-  } catch (error) {
-    console.error('Error fetching recommendations from database:', error);
-    res.json({
-      success: true,
-      data: stockRecommendations,
-      lastUpdated: new Date().toISOString(),
-      total: stockRecommendations.length
-    });
-  }
-});
-
-
-app.get('/api/stocks', async (req, res) => {
-  try {
-    const client = await pool.connect();
-    const result = await client.query(`
       SELECT * FROM trading.stocks 
-      ORDER BY market_cap DES
+      ORDER BY market_cap DESC
     `);
     client.release();
     
@@ -953,6 +928,7 @@ app.get('/api/stocks', async (req, res) => {
     });
   }
 });
+
 
 // Analytics endpoint
 app.get('/api/analytics', (req, res) => {
@@ -990,6 +966,7 @@ app.get('/api/analytics', (req, res) => {
 // ✅ Added for API Gateway integration
 app.get('/trades', async (req, res) => {
   try {
+    console.log('✅ /trades route is active');
     const client = await pool.connect();
     const result = await client.query(`
       SELECT * FROM trades

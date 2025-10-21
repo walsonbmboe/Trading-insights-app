@@ -3,6 +3,7 @@ frontend:
   phases:
     preBuild:
       commands:
+        - rm -rf dist node_modules .vite .env
         - npm ci
         - echo "VITE_API_URL=$VITE_API_URL" >> .env
     build:

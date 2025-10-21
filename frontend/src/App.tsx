@@ -8,7 +8,7 @@ function App() {
   const BASE_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL}/api/stocks`)
+    fetch(`${BASE_URL}/trades`)
       .then(res => res.json())
       .then(data => {
         setStocks(data.data || []);

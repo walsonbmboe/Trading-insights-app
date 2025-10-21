@@ -17,4 +17,4 @@ frontend:
       - frontend/node_modules/**/*
 env:
   variables:
-    VITE_API_URL: "http://51.20.115.223:5000"
+    VITE_API_URL: https://v5ve3rxecf.execute-api.eu-north-1.amazonaws.com/Prod

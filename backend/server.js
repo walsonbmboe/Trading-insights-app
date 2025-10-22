@@ -22,6 +22,13 @@ const pool = new Pool({
 
 const app = express();
 
+// ✅ Enable CORS
+app.use(cors({
+  origin: '*', // allow all origins for now (we can restrict to Amplify domain later)
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type']
+}));
+
 // ✅ Use fallback port to avoid EADDRINUSE
 const PORT = process.env.PORT || 5000;
 
@@ -939,7 +946,6 @@ app.get('/api/stocks', async (req, res) => {
     });
   }
 });
-
 
 
 // Analytics endpoint

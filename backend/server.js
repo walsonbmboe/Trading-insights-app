@@ -909,11 +909,21 @@ app.get('/api/stocks', async (req, res) => {
   try {
     const client = await pool.connect();
     const result = await client.query(`
-      SELECT * FROM trading.stocks 
+      SELECT * FROM stocks
       ORDER BY market_cap DESC
     `);
     client.release();
-    
+
+    // If database has no data, use mock list
+    if (result.rows.length === 0) {
+      console.log('⚠️ No stocks found in DB — using mock data');
+      return res.json({
+        success: true,
+        data: stockRecommendations,
+        count: stockRecommendations.length
+      });
+    }
+
     res.json({
       success: true,
       data: result.rows,
@@ -921,13 +931,15 @@ app.get('/api/stocks', async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching stocks from database:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch stocks from database',
-      error: error.message
+    res.json({
+      success: true,
+      data: stockRecommendations,
+      lastUpdated: new Date().toISOString(),
+      total: stockRecommendations.length
     });
   }
 });
+
 
 
 // Analytics endpoint

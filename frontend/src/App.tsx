@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react';
-import './App.css';
+import { useEffect, useState } from "react";
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -9,79 +8,141 @@ interface Stock {
   action: string;
   price: number;
   change: number;
-  confidence: number;
   reason: string;
+  confidence: number;
   sector: string;
 }
 
-function App() {
+export default function App() {
   const [stocks, setStocks] = useState<Stock[]>([]);
+  const [analytics, setAnalytics] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${BASE_URL}/api/stocks`)
-      .then(res => res.json())
-      .then(data => {
-        setStocks(data.data || []);
+    Promise.all([
+      fetch(`${BASE_URL}/api/stocks`).then((res) => res.json()),
+      fetch(`${BASE_URL}/api/analytics`).then((res) => res.json()),
+    ])
+      .then(([stocksData, analyticsData]) => {
+        setStocks(stocksData.data || []);
+        setAnalytics(analyticsData.data || null);
         setLoading(false);
       })
-      .catch(err => {
-        console.error('Error fetching stocks:', err);
+      .catch((err) => {
+        console.error("Error fetching data:", err);
         setLoading(false);
       });
   }, []);
 
-  const getActionColor = (action: string) => {
-    switch (action) {
-      case 'BUY': return 'bg-green-100 text-green-700 border-green-400';
-      case 'SELL': return 'bg-red-100 text-red-700 border-red-400';
-      default: return 'bg-yellow-100 text-yellow-700 border-yellow-400';
-    }
-  };
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-dark-bg text-white">
+        <p className="text-lg">Loading market insights...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-800 p-6">
-      <header className="text-center mb-10">
-        <h1 className="text-4xl font-bold text-blue-600">📈 Trading Insights Dashboard</h1>
-        <p className="text-gray-600 mt-2">AI-powered stock recommendations and market analysis</p>
+    <div className="min-h-screen bg-dark-bg text-gray-100 font-sans p-6">
+      {/* Header */}
+      <header className="flex justify-between items-center mb-8 border-b border-gray-700 pb-4">
+        <h1 className="text-3xl font-bold text-trading-green">
+          AI Trading Assistant
+        </h1>
+        <span className="text-sm text-gray-400">
+          Smarter Insights • Real-Time Decisions
+        </span>
       </header>
 
-      {loading ? (
-        <div className="text-center text-lg font-semibold">Loading market data...</div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {stocks.map((stock, i) => (
-            <div key={i} className={`border-2 rounded-2xl shadow-lg p-6 transition hover:shadow-2xl hover:scale-105 bg-white`}>
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">{stock.company}</h2>
-                <span className={`px-3 py-1 rounded-full border ${getActionColor(stock.action)} font-bold`}>
-                  {stock.action}
-                </span>
-              </div>
-
-              <p className="text-sm text-gray-500 mb-2">Ticker: {stock.symbol}</p>
-              <p className="text-lg font-bold mb-2">${stock.price.toFixed(2)}</p>
-              <p className={`mb-2 ${stock.change > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {stock.change > 0 ? '▲' : '▼'} {stock.change}%
-              </p>
-              <p className="text-sm text-gray-700 mb-4">{stock.reason}</p>
-
-              <div className="w-full bg-gray-200 rounded-full h-3">
-                <div
-                  className="bg-blue-500 h-3 rounded-full"
-                  style={{ width: `${stock.confidence}%` }}
-                ></div>
-              </div>
-              <p className="text-sm mt-2 text-gray-600">
-                Confidence: <strong>{stock.confidence}%</strong>
-              </p>
-              <p className="text-xs text-gray-400 mt-1">Sector: {stock.sector}</p>
-            </div>
-          ))}
-        </div>
+      {/* Analytics Summary */}
+      {analytics && (
+        <section className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+          <div className="bg-gray-800 p-4 rounded-lg shadow-md">
+            <h3 className="text-sm text-gray-400">Total Stocks</h3>
+            <p className="text-2xl font-bold">{analytics.totalStocks}</p>
+          </div>
+          <div className="bg-gray-800 p-4 rounded-lg shadow-md">
+            <h3 className="text-sm text-gray-400">Buy Signals</h3>
+            <p className="text-2xl font-bold text-trading-green">
+              {analytics.recommendations.buy}
+            </p>
+          </div>
+          <div className="bg-gray-800 p-4 rounded-lg shadow-md">
+            <h3 className="text-sm text-gray-400">Sell Signals</h3>
+            <p className="text-2xl font-bold text-trading-red">
+              {analytics.recommendations.sell}
+            </p>
+          </div>
+          <div className="bg-gray-800 p-4 rounded-lg shadow-md">
+            <h3 className="text-sm text-gray-400">Market Trend</h3>
+            <p
+              className={`text-2xl font-bold ${
+                analytics.marketTrend === "bullish"
+                  ? "text-trading-green"
+                  : "text-trading-red"
+              }`}
+            >
+              {analytics.marketTrend.toUpperCase()}
+            </p>
+          </div>
+        </section>
       )}
+
+      {/* Stock Table */}
+      <section>
+        <h2 className="text-xl font-semibold mb-4">Stock Recommendations</h2>
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm border border-gray-700">
+            <thead className="bg-gray-800">
+              <tr className="text-left text-gray-400 uppercase text-xs">
+                <th className="py-3 px-4">Company</th>
+                <th className="py-3 px-4">Ticker</th>
+                <th className="py-3 px-4">Action</th>
+                <th className="py-3 px-4">Price ($)</th>
+                <th className="py-3 px-4">Change (%)</th>
+                <th className="py-3 px-4">Confidence</th>
+                <th className="py-3 px-4">Sector</th>
+                <th className="py-3 px-4">Reason</th>
+              </tr>
+            </thead>
+            <tbody>
+              {stocks.map((stock) => (
+                <tr
+                  key={stock.symbol}
+                  className="border-t border-gray-700 hover:bg-gray-700/40 transition"
+                >
+                  <td className="py-3 px-4 font-medium">{stock.company}</td>
+                  <td className="py-3 px-4 text-gray-400">{stock.symbol}</td>
+                  <td
+                    className={`py-3 px-4 font-bold ${
+                      stock.action === "BUY"
+                        ? "text-trading-green"
+                        : stock.action === "SELL"
+                        ? "text-trading-red"
+                        : "text-yellow-400"
+                    }`}
+                  >
+                    {stock.action}
+                  </td>
+                  <td className="py-3 px-4">${stock.price}</td>
+                  <td
+                    className={`py-3 px-4 ${
+                      stock.change > 0
+                        ? "text-trading-green"
+                        : "text-trading-red"
+                    }`}
+                  >
+                    {stock.change > 0 ? "▲" : "▼"} {stock.change}%
+                  </td>
+                  <td className="py-3 px-4">{stock.confidence}%</td>
+                  <td className="py-3 px-4 text-gray-400">{stock.sector}</td>
+                  <td className="py-3 px-4 text-gray-300">{stock.reason}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
   );
 }
-
-export default App;

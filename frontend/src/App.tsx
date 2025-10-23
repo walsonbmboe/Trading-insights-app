@@ -17,15 +17,16 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL}/api/stocks`)
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch stocks");
-        return res.json();
-      })
-      .then((data) => setStocks(data))
-      .catch((err) => console.error(err))
-      .finally(() => setLoading(false));
-  }, []);
+  fetch(`${import.meta.env.VITE_API_URL}/api/stocks`)
+    .then(res => res.json())
+    .then(data => {
+      // Check if backend wraps data inside "data"
+      setStocks(Array.isArray(data) ? data : data.data || []);
+    })
+    .catch(err => console.error(err))
+    .finally(() => setLoading(false));
+}, []);
+
 
   if (loading) {
     return (

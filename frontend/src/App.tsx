@@ -37,14 +37,14 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-dark-bg text-white flex flex-col items-center py-10 px-4">
+    <div className="min-h-screen bg-gray-950 text-white flex flex-col items-center py-10 px-4">
       {/* Header */}
       <h1 className="text-4xl font-bold text-center mb-2">AI Trading Assistant</h1>
       <p className="text-gray-400 mb-8">Smarter Insights • Real-Time Decisions</p>
 
       {/* Stock Table */}
       <div className="w-full max-w-6xl bg-gray-900 shadow-lg rounded-2xl overflow-hidden">
-        <table className="min-w-full border-collapse text-sm md:text-base">
+        <table className="min-w-full border border-gray-700 text-sm md:text-base">
           <thead className="bg-gray-800 text-gray-300 uppercase text-xs tracking-wider">
             <tr>
               <th className="p-4 text-left">Company</th>
@@ -64,18 +64,20 @@ function App() {
                 key={index}
                 className="border-t border-gray-800 hover:bg-gray-800 transition-all duration-200"
               >
-                <td className="p-4 font-semibold">{stock.company}</td>
-                <td className="p-4 text-gray-400">{stock.ticker}</td>
+                <td className="p-4 border border-gray-700 font-semibold">{stock.company}</td>
+                <td className="p-4 border border-gray-700 font-semibold">{stock.ticker}</td>
                 <td
                   className={`p-4 font-bold ${
                     stock.action === "BUY"
-                      ? "text-trading-green"
-                      : "text-trading-red"
+                      ? "text-green-400"
+                      : stock.action === "SELL"
+                      ? "text-red-400"
+                      : "text-yellow-400"
                   }`}
                 >
                   {stock.action}
                 </td>
-                <td className="p-4">${stock.price.toFixed(2)}</td>
+                <td className="p-4 border border-gray-700 font-semibold">${stock.price.toFixed(2)}</td>
                 <td
                   className={`p-4 ${
                     stock.change >= 0 ? "text-trading-green" : "text-trading-red"
@@ -83,9 +85,9 @@ function App() {
                 >
                   {stock.change >= 0 ? "▲" : "▼"} {Math.abs(stock.change)}%
                 </td>
-                <td className="p-4">{stock.confidence}%</td>
-                <td className="p-4 text-gray-400">{stock.sector}</td>
-                <td className="p-4 text-gray-300 italic">{stock.reason}</td>
+                <td className="p-4 border border-gray-700 font-semibold">{stock.confidence}%</td>
+                <td className="p-4 border border-gray-700 font-semibold">{stock.sector}</td>
+                <td className="p-4 border border-gray-700 font-semibold">{stock.reason}</td>
               </tr>
             ))}
           </tbody>

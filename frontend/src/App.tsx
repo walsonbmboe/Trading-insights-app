@@ -77,9 +77,9 @@ export default function App() {
   const PIE_COLORS = ["#10b981", "#f59e0b", "#ef4444"];
 
   const actionColors: Record<string, string> = {
-    BUY: "bg-green-900/50 text-green-300 border border-green-700",
-    SELL: "bg-red-900/50 text-red-300 border border-red-700",
-    HOLD: "bg-yellow-900/50 text-yellow-300 border border-yellow-700",
+    BUY: "bg-green-500/20 text-green-300 border border-green-400",
+    SELL: "bg-red-500/20 text-red-300 border border-red-400",
+    HOLD: "bg-yellow-500/20 text-yellow-300 border border-yellow-400",
   };
 
   if (loading) {
@@ -91,19 +91,27 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden text-white font-sans bg-gradient-to-b from-black via-gray-950 to-gray-900">
-      {/* Subtle glossy overlay */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(56,189,248,0.08),_transparent_70%)] pointer-events-none" />
-      <div className="absolute inset-0 bg-[linear-gradient(120deg,rgba(30,64,175,0.2)_0%,rgba(6,182,212,0.1)_100%)] opacity-70 pointer-events-none" />
-      <div className="relative z-10 p-6">
+  <div className="min-h-screen relative overflow-hidden text-white font-sans bg-gradient-to-b from-black via-black to-gray-900">
+    {/* Glossy + Techy Overlays */}
+    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(255,255,255,0.05),_transparent_70%)] mix-blend-soft-light pointer-events-none" />
+    <div className="absolute inset-0 bg-[linear-gradient(120deg,rgba(30,64,175,0.2)_0%,rgba(6,182,212,0.1)_100%)] opacity-70 pointer-events-none" />
+    <div className="absolute inset-0 animate-pulse bg-[radial-gradient(circle_at_bottom,_rgba(255,255,255,0.02),_transparent_80%)] pointer-events-none" />
+    <div className="absolute inset-0 bg-[url('/assets/tech-grid.svg')] opacity-10 mix-blend-overlay pointer-events-none" />
+
+    <div className="relative z-10 p-6">
+
 
         {/* Header */}
         <header className="max-w-6xl mx-auto text-center mb-10">
-          <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight mb-3
-                        bg-gradient-to-r from-cyan-400 via-emerald-400 to-blue-500
-                        bg-clip-text text-transparent drop-shadow-lg">
-            AI Trading Assistant
-          </h1>
+  <h1
+    className="text-5xl md:text-6xl font-extrabold tracking-tight mb-4
+               text-center bg-clip-text
+               bg-gradient-to-r from-emerald-400 via-cyan-400 to-sky-500
+               drop-shadow-[0_0_20px_rgba(16,185,129,0.3)]
+               animate-pulse text-white"
+  >
+    ⚡ AI Trading Assistant ⚡
+  </h1>
           <p className="text-gray-400 text-sm md:text-base">
             Smarter Insights • Real-Time Decisions
           </p>
@@ -116,8 +124,8 @@ export default function App() {
               <h2 className="text-lg font-semibold text-cyan-300 mb-2">
                 Market Sentiment
               </h2>
-              <div style={{ width: "100%", height: 220 }}>
-                <ResponsiveContainer>
+              <div className="w-full min-h-[260px]">
+                <ResponsiveContainer width="100%" height={260}>
                   <PieChart>
                     <Pie
                       data={summary}
@@ -154,8 +162,8 @@ export default function App() {
                   No valid price data available.
                 </div>
               ) : (
-                <div style={{ width: "100%", height: 220 }}>
-                  <ResponsiveContainer>
+                <div className="w-full min-h-[280px]">
+                  <ResponsiveContainer width="100%" height={280}>
                     <LineChart data={lineData}>
                       <CartesianGrid stroke="#222" strokeDasharray="3 3" />
                       <XAxis dataKey="name" stroke="#9ca3af" />
@@ -208,7 +216,7 @@ export default function App() {
                       <td className="p-3 border border-gray-800 text-gray-300">{s.ticker}</td>
                       <td className="p-3 border border-gray-800">
                         <span
-                          className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${actionColors[s.action]}`}
+                          className={`inline-block px-3 py-1 rounded-full text-sm font-bold shadow-md ${actionColors[s.action]}`}
                         >
                           {s.action}
                         </span>
@@ -233,10 +241,10 @@ export default function App() {
           </section>
         </main>
 
-        <footer className="max-w-6xl mx-auto text-center text-xs text-gray-500 mt-10">
+        {/* Footer */}
+        <footer className="text-xs text-gray-500 text-center mt-10">
           © {new Date().getFullYear()} Trading Insights
         </footer>
-      </div>
-    </div>
-  );
+          </div> {/* closes inner content wrapper */}
+  </div> );  {/* closes outermost container */}
 }

@@ -40,9 +40,9 @@ export default function App() {
         const json = await res.json();
         const raw: RawStock[] = Array.isArray(json) ? json : json.data || [];
 
-        const normalized: Stock[] = raw.map((s: RawStock, idx: number) => ({
-          company: s.company || s.Company || s.name || `Stock ${idx + 1}`,
-          ticker: s.ticker || s.Ticker || s.symbol || `STK${idx + 1}`,
+        const normalized: Stock[] = raw.map((s: RawStock, _idx: number) => ({
+          company: s.company || s.Company || s.name || `Stock ${_idx + 1}`,
+          ticker: s.ticker || s.Ticker || s.symbol || `STK${_idx + 1}`,
           action:
             s.action?.toUpperCase() === "BUY"
               ? "BUY"
@@ -67,7 +67,7 @@ export default function App() {
 
   const lineData = stocks
     .filter((s) => !Number.isNaN(s.price) && s.price > 0)
-    .map((s, i) => ({ name: s.ticker, price: s.price }));
+    .map((s, _) => ({ name: s.ticker, price: s.price }));
 
   const summary = [
     { name: "BUY", value: stocks.filter((s) => s.action === "BUY").length },
@@ -136,7 +136,7 @@ export default function App() {
                       outerRadius={80}
                       label={({ name, value }) => `${name} (${value})`}
                     >
-                      {summary.map((entry, idx) => (
+                      {summary.map((_entry, idx) => (
                         <Cell key={idx} fill={PIE_COLORS[idx % PIE_COLORS.length]} />
                       ))}
                     </Pie>

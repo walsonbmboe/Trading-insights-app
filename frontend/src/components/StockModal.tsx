@@ -12,11 +12,11 @@ import {
 type StockModalProps = {
   stock: {
     ticker: string;
-    companyName: string;
+    companyName?: string;
     price: number;
     change: number;
     targetPrice?: number;
-    marketCap?: string;
+    marketCap?: number | string;
     peRatio?: number;
     previousClose?: number;
   };

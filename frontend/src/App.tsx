@@ -16,11 +16,13 @@ import {
   Legend,
 } from "recharts";
 import "./index.css";
+import { Authenticator } from '@aws-amplify/ui-react';
+import '@aws-amplify/ui-react/styles.css';
 
 type RawStock = Record<string, any>;
 
 interface Stock {
-  company: string;
+  companyName?: string;
   ticker: string;
   action: "BUY" | "SELL" | "HOLD";
   price: number;
@@ -50,7 +52,7 @@ export default function App() {
         const raw: RawStock[] = Array.isArray(json) ? json : json.data || [];
 
         const normalized: Stock[] = raw.map((s: RawStock, idx: number) => ({
-          company: s.company || s.Company || s.name || `Stock ${idx + 1}`,
+          companyName: s.companyName || s.company || s.Company || s.name || `Stock ${idx + 1}`,
           ticker: s.ticker || s.Ticker || s.symbol || `STK${idx + 1}`,
           action:
             s.action?.toUpperCase() === "BUY"
@@ -105,11 +107,22 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden text-white font-sans bg-gradient-to-b from-black via-black to-gray-900">
-      {/* Background Layers */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(255,255,255,0.05),_transparent_70%)] mix-blend-soft-light pointer-events-none" />
-      <div className="absolute inset-0 bg-[linear-gradient(120deg,rgba(30,64,175,0.2)_0%,rgba(6,182,212,0.1)_100%)] opacity-70 pointer-events-none" />
-      <div className="absolute inset-0 animate-pulse bg-[radial-gradient(circle_at_bottom,_rgba(255,255,255,0.02),_transparent_80%)] pointer-events-none" />
+    <Authenticator>
+    {({ signOut, user }) => (
+      <div className="min-h-screen relative overflow-hidden text-white font-sans bg-gradient-to-b from-black via-black to-gray-900">
+        {/* ✅ Optional Header for User Info + Sign Out */}
+        <div className="absolute top-4 left-4 text-sm text-gray-400">
+          👋 Welcome, {user?.username || "Trader"}
+        </div>
+
+        <div className="absolute top-4 right-4">
+          <button
+            onClick={signOut}
+            className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-sm shadow"
+          >
+            Sign Out
+          </button>
+        </div>
 
       <div className="relative z-10 p-6">
         {/* Header */}
@@ -220,7 +233,7 @@ export default function App() {
                     className="even:bg-gray-900/50 odd:bg-transparent hover:bg-gray-800/60 transition-colors cursor-pointer"
                       onClick={() => setSelectedStock(s)}
                       > 
-                      <td className="p-3 border border-gray-800 font-medium">{s.company}</td>
+                      <td className="p-3 border border-gray-800 font-medium">{s.companyName ?? "N/A"}</td>
                       <td className="p-3 border border-gray-800 text-gray-300">{s.ticker}</td>
                       <td className="p-3 border border-gray-800">
                         <span
@@ -283,7 +296,7 @@ export default function App() {
 
       {/* Modal Header */}
       <h2 className="text-2xl font-bold mb-4 text-cyan-400 text-center">
-        {selectedStock.company} ({selectedStock.ticker})
+        {selectedStock.companyName ?? "N/A"} ({selectedStock.ticker})
       </h2>
 
       {/* Stock Details Grid */}
@@ -355,4 +368,8 @@ export default function App() {
     onClose={() => setSelectedStock(null)}
   />
 )}
-</div> )}
+</div>
+    )}
+  </Authenticator>
+);
+}; 

@@ -4,6 +4,7 @@ frontend:
     preBuild:
       commands:
         - cd frontend
+        - rm -rf node_modules
         - npm ci
     build:
       commands:
@@ -12,9 +13,6 @@ frontend:
     baseDirectory: frontend/dist
     files:
       - '**/*'
-  cache:
-    paths:
-      - frontend/node_modules/**/*
 env:
   variables:
     VITE_API_URL: https://v5ve3rxecf.execute-api.eu-north-1.amazonaws.com/Prod

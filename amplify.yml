@@ -8,7 +8,7 @@ frontend:
         - npm ci
     build:
       commands:
-        - tsc --project frontend/tsconfig.app.json && vite build
+        - npm exec tsc -- --project frontend/tsconfig.app.json && npm run build
   artifacts:
     baseDirectory: frontend/dist
     files:

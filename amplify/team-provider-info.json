@@ -1,0 +1,23 @@
+{
+  "dev": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-tradinginginsights-dev-d0161-authRole",
+      "UnauthRoleArn": "arn:aws:iam::396608770300:role/amplify-tradinginginsights-dev-d0161-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::396608770300:role/amplify-tradinginginsights-dev-d0161-authRole",
+      "Region": "us-east-1",
+      "DeploymentBucketName": "amplify-tradinginginsights-dev-d0161-deployment",
+      "UnauthRoleName": "amplify-tradinginginsights-dev-d0161-unauthRole",
+      "StackName": "amplify-tradinginginsights-dev-d0161",
+      "StackId": "arn:aws:cloudformation:us-east-1:396608770300:stack/amplify-tradinginginsights-dev-d0161/8e4220f0-c6c9-11f0-af49-1222a1cdeb1f",
+      "AmplifyAppId": "d33uxofbsuj36w"
+    },
+    "categories": {
+      "hosting": {
+        "amplifyhosting": {
+          "appId": "d33uxofbsuj36w",
+          "type": "manual"
+        }
+      }
+    }
+  }
+}

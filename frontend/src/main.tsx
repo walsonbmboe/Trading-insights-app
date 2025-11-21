@@ -6,7 +6,7 @@ import awsconfig from "./aws-exports.js";
 import App from './App.tsx';
 import './index.css';
 
-Amplify.configure(awsconfig.default); 
+Amplify.configure(awsconfig); 
 
 
 createRoot(document.getElementById('root')!).render(

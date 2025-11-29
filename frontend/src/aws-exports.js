@@ -1,4 +1,5 @@
 const awsconfig = {
+
   Auth: {
     Cognito: {
       userPoolId: "eu-north-1_Fa7X7eQcm",
@@ -22,4 +23,3 @@ const awsconfig = {
 };
 
 export default awsconfig;
-

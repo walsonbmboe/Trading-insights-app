@@ -8,6 +8,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@aws-sdk/client-cognito-identity": "^3.936.0",
+    "@aws-sdk/client-lex-runtime-v2": "^3.936.0",
+    "@aws-sdk/credential-provider-cognito-identity": "^3.936.0",
     "axios": "^1.11.0",
     "lucide-react": "^0.539.0",
     "react": "^18.3.0",

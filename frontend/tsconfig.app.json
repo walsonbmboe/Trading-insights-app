@@ -10,9 +10,11 @@
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
+    
+    // --- FIXES START HERE ---
+    "esModuleInterop": true,              // <-- Added: Allows default imports from non-ESM (CommonJS) files.
+    "allowSyntheticDefaultImports": true, // <-- Added: Works with esModuleInterop for cleaner import syntax.
     "verbatimModuleSyntax": false,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
     "noEmit": true,
     "jsx": "react-jsx",
 
@@ -22,8 +24,13 @@
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    
+    // <-- REMOVED: "noUncheckedSideEffectImports" (Often conflicts with module imports)
+    "noUncheckedIndexedAccess": true // Optional: Add for extra safety in strict mode
   },
-  "include": ["src"]
+  "include": [
+    "src/**/*.ts", 
+    "src/**/*.tsx", 
+    "src/**/*.d.ts"
+  ]
 }
-

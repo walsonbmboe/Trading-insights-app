@@ -137,7 +137,7 @@ function SentimentsPage() {
         const mockDebtStatus = ["Net Cash", "Moderate Debt", "High Debt"] as const;
         const mockOutlook = ["Positive", "Neutral", "Negative"] as const;
 
-        const generateAIInsight = (stock: Stock): string => {
+        const generateAIInsight = (_stock: Stock): string => {
   const insights: string[] = [
     `Strong revenue growth of 15% YoY.`,
     `New CEO brings innovation direction.`,

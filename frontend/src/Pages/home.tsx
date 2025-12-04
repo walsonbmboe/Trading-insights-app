@@ -1,10 +1,17 @@
-// src/pages/Home.tsx
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { TrendingUp, Wallet, Brain, MessageCircle, Sparkles, Zap, Shield } from "lucide-react";
+import { useAuthenticator } from "@aws-amplify/ui-react";
+import { TrendingUp, Wallet, Brain, MessageCircle, Sparkles, Zap, Shield, LogOut, User } from "lucide-react";
 
 export default function Home() {
   const nav = useNavigate();
+  const { authStatus, signOut, user } = useAuthenticator((context) => [
+    context.authStatus,
+    context.signOut,
+    context.user,
+  ]);
+
+  const isAuthenticated = authStatus === "authenticated";
 
   // Quick Action Cards
   const quickActions = [
@@ -40,6 +47,14 @@ export default function Home() {
     { icon: <Shield className="w-5 h-5" />, text: "Risk Management" },
   ];
 
+  const handleActionClick = (path: string) => {
+    if (!isAuthenticated) {
+      nav("/auth");
+    } else {
+      nav(path);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white overflow-hidden">
       {/* Animated Background Grid */}
@@ -65,7 +80,7 @@ export default function Home() {
             </span>
           </motion.div>
 
-          <nav className="flex items-center gap-8 text-sm font-medium">
+          <nav className="flex items-center gap-6 text-sm font-medium">
             <button 
               onClick={() => nav("/")} 
               className="text-slate-300 hover:text-white transition-colors relative group"
@@ -73,20 +88,47 @@ export default function Home() {
               Home
               <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 group-hover:w-full transition-all duration-300" />
             </button>
-            <button 
-              onClick={() => nav("/sentiments")} 
-              className="text-slate-300 hover:text-white transition-colors relative group"
-            >
-              Sentiments
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 group-hover:w-full transition-all duration-300" />
-            </button>
-            <button 
-              onClick={() => nav("/portfolio")} 
-              className="text-slate-300 hover:text-white transition-colors relative group"
-            >
-              Portfolio
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 group-hover:w-full transition-all duration-300" />
-            </button>
+
+            {isAuthenticated ? (
+              <>
+                <button 
+                  onClick={() => nav("/sentiments")} 
+                  className="text-slate-300 hover:text-white transition-colors relative group"
+                >
+                  Sentiments
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 group-hover:w-full transition-all duration-300" />
+                </button>
+                <button 
+                  onClick={() => nav("/portfolio")} 
+                  className="text-slate-300 hover:text-white transition-colors relative group"
+                >
+                  Portfolio
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 group-hover:w-full transition-all duration-300" />
+                </button>
+
+                {/* User Menu */}
+                <div className="flex items-center gap-3 ml-2 pl-4 border-l border-slate-700">
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800/50 border border-slate-700/50">
+                    <User className="w-4 h-4 text-blue-400" />
+                    <span className="text-xs text-slate-300">{user?.signInDetails?.loginId}</span>
+                  </div>
+                  <button
+                    onClick={signOut}
+                    className="p-2 rounded-lg bg-slate-800/50 border border-slate-700/50 hover:bg-slate-700/50 transition-colors"
+                    title="Sign Out"
+                  >
+                    <LogOut className="w-4 h-4 text-slate-400" />
+                  </button>
+                </div>
+              </>
+            ) : (
+              <button
+                onClick={() => nav("/auth")}
+                className="px-6 py-2 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold transition-all duration-300 shadow-lg shadow-blue-500/50"
+              >
+                Sign In
+              </button>
+            )}
           </nav>
         </div>
       </header>
@@ -128,20 +170,41 @@ export default function Home() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="flex flex-wrap justify-center gap-4"
           >
-            <button
-              onClick={() => nav("/sentiments")}
-              className="group relative px-8 py-4 rounded-full font-semibold text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 transition-all duration-300 shadow-lg shadow-blue-500/50 hover:shadow-blue-500/70 hover:scale-105"
-            >
-              <span className="relative z-10">Explore Sentiments</span>
-              <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-400 to-purple-400 opacity-0 group-hover:opacity-20 blur-xl transition-opacity" />
-            </button>
+            {isAuthenticated ? (
+              <>
+                <button
+                  onClick={() => nav("/sentiments")}
+                  className="group relative px-8 py-4 rounded-full font-semibold text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 transition-all duration-300 shadow-lg shadow-blue-500/50 hover:shadow-blue-500/70 hover:scale-105"
+                >
+                  <span className="relative z-10">Go to Dashboard</span>
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-400 to-purple-400 opacity-0 group-hover:opacity-20 blur-xl transition-opacity" />
+                </button>
 
-            <button
-              onClick={() => nav("/portfolio")}
-              className="px-8 py-4 rounded-full font-semibold text-white border border-slate-700 bg-slate-800/50 backdrop-blur-sm hover:bg-slate-700/50 hover:border-slate-600 transition-all duration-300 hover:scale-105"
-            >
-              View Portfolio
-            </button>
+                <button
+                  onClick={() => nav("/portfolio")}
+                  className="px-8 py-4 rounded-full font-semibold text-white border border-slate-700 bg-slate-800/50 backdrop-blur-sm hover:bg-slate-700/50 hover:border-slate-600 transition-all duration-300 hover:scale-105"
+                >
+                  View Portfolio
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => nav("/auth")}
+                  className="group relative px-8 py-4 rounded-full font-semibold text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 transition-all duration-300 shadow-lg shadow-blue-500/50 hover:shadow-blue-500/70 hover:scale-105"
+                >
+                  <span className="relative z-10">Get Started Free</span>
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-400 to-purple-400 opacity-0 group-hover:opacity-20 blur-xl transition-opacity" />
+                </button>
+
+                <button
+                  onClick={() => nav("/auth")}
+                  className="px-8 py-4 rounded-full font-semibold text-white border border-slate-700 bg-slate-800/50 backdrop-blur-sm hover:bg-slate-700/50 hover:border-slate-600 transition-all duration-300 hover:scale-105"
+                >
+                  Sign In
+                </button>
+              </>
+            )}
           </motion.div>
 
           {/* Feature Pills */}
@@ -160,51 +223,52 @@ export default function Home() {
           </motion.div>
         </section>
 
-        {/* ========================= TODAY'S SNAPSHOT ========================= */}
-        <motion.section
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.6 }}
-          className="max-w-4xl mx-auto"
-        >
-          <div className="relative rounded-3xl border border-slate-800/50 bg-gradient-to-br from-slate-900/90 to-slate-800/90 backdrop-blur-xl p-8 shadow-2xl overflow-hidden">
-            {/* Glow effect */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl" />
-            <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl" />
-            
-            <div className="relative z-10">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/50">
-                    <TrendingUp className="w-6 h-6 text-white" />
+        {/* ========================= TODAY'S SNAPSHOT (Only for authenticated users) ========================= */}
+        {isAuthenticated && (
+          <motion.section
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+            className="max-w-4xl mx-auto"
+          >
+            <div className="relative rounded-3xl border border-slate-800/50 bg-gradient-to-br from-slate-900/90 to-slate-800/90 backdrop-blur-xl p-8 shadow-2xl overflow-hidden">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl" />
+              <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl" />
+              
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/50">
+                      <TrendingUp className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold">Today's Snapshot</h2>
+                      <p className="text-sm text-slate-400">Real-time market intelligence</p>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="text-2xl font-bold">Today's Snapshot</h2>
-                    <p className="text-sm text-slate-400">Real-time market intelligence</p>
+
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-lg shadow-emerald-500/50" />
+                    <span className="text-sm text-emerald-400 font-medium">Live</span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-lg shadow-emerald-500/50" />
-                  <span className="text-sm text-emerald-400 font-medium">Live</span>
+                <div className="space-y-4">
+                  <SnapshotRow label="Global Sentiment" value="Moderately Bullish" trend="up" />
+                  <SnapshotRow label="AI Confidence" value="High (82%)" trend="up" />
+                  <SnapshotRow label="Portfolio Risk" value="Balanced" trend="neutral" />
                 </div>
-              </div>
 
-              <div className="space-y-4">
-                <SnapshotRow label="Global Sentiment" value="Moderately Bullish" trend="up" />
-                <SnapshotRow label="AI Confidence" value="High (82%)" trend="up" />
-                <SnapshotRow label="Portfolio Risk" value="Balanced" trend="neutral" />
-              </div>
-
-              <div className="mt-6 p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  💡 These indicators are a guide, not a guarantee. You stay in control; the system
-                  simply keeps the numbers honest.
-                </p>
+                <div className="mt-6 p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    💡 These indicators are a guide, not a guarantee. You stay in control; the system
+                    simply keeps the numbers honest.
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-        </motion.section>
+          </motion.section>
+        )}
 
         {/* ========================= QUICK START ========================= */}
         <section className="space-y-8">
@@ -213,9 +277,13 @@ export default function Home() {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.8 }}
           >
-            <h2 className="text-3xl font-bold text-center mb-4">Quick Start</h2>
+            <h2 className="text-3xl font-bold text-center mb-4">
+              {isAuthenticated ? "Quick Start" : "What You'll Get"}
+            </h2>
             <p className="text-slate-400 text-center max-w-2xl mx-auto">
-              Choose your next action and let AI guide your trading decisions
+              {isAuthenticated 
+                ? "Choose your next action and let AI guide your trading decisions"
+                : "Sign up now to unlock powerful AI-driven trading insights"}
             </p>
           </motion.div>
 
@@ -228,29 +296,25 @@ export default function Home() {
                 transition={{ duration: 0.4, delay: 0.9 + idx * 0.1 }}
                 whileHover={{ y: -8, scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => nav(item.path)}
+                onClick={() => handleActionClick(item.path)}
                 className={`group relative text-left rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700/50 backdrop-blur-xl p-6 overflow-hidden transition-all duration-300 hover:border-slate-600 hover:shadow-2xl ${item.glow}`}
               >
-                {/* Gradient overlay on hover */}
                 <div className={`absolute inset-0 bg-gradient-to-br ${item.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
                 
-                {/* Icon */}
                 <div className={`relative w-14 h-14 rounded-xl bg-gradient-to-br ${item.gradient} flex items-center justify-center shadow-lg mb-4 text-white group-hover:scale-110 transition-transform duration-300`}>
                   {item.icon}
                 </div>
 
-                {/* Content */}
                 <div className="relative">
                   <h3 className="font-bold text-lg mb-2 text-white">{item.title}</h3>
                   <p className="text-sm text-slate-400 mb-4 leading-relaxed">{item.desc}</p>
 
                   <span className={`inline-flex items-center gap-2 text-sm font-semibold bg-gradient-to-r ${item.gradient} bg-clip-text text-transparent`}>
-                    Launch
+                    {isAuthenticated ? "Launch" : "Sign Up to Access"}
                     <span className="group-hover:translate-x-1 transition-transform">→</span>
                   </span>
                 </div>
 
-                {/* Glow effect */}
                 <div className={`absolute -bottom-12 -right-12 w-32 h-32 bg-gradient-to-br ${item.gradient} rounded-full blur-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-300`} />
               </motion.button>
             ))}
@@ -265,7 +329,6 @@ export default function Home() {
           className="flex justify-center"
         >
           <div className="max-w-2xl w-full relative rounded-3xl border border-slate-800/50 bg-gradient-to-br from-slate-900/90 to-slate-800/90 backdrop-blur-xl p-8 shadow-2xl overflow-hidden">
-            {/* Animated gradient background */}
             <div className="absolute inset-0 bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-blue-500/10 animate-pulse" />
             
             <div className="relative z-10 flex gap-6 items-center">
@@ -280,8 +343,11 @@ export default function Home() {
                 <p className="text-slate-400 leading-relaxed mb-4">
                   Advanced emotional intelligence for real understanding. Ask it anything about markets, strategies, or risk management.
                 </p>
-                <button className="px-6 py-2 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-semibold text-sm transition-all duration-300 shadow-lg shadow-purple-500/50 hover:shadow-purple-500/70">
-                  Start Conversation
+                <button 
+                  onClick={() => handleActionClick("/sentiments")}
+                  className="px-6 py-2 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-semibold text-sm transition-all duration-300 shadow-lg shadow-purple-500/50 hover:shadow-purple-500/70"
+                >
+                  {isAuthenticated ? "Start Conversation" : "Sign Up to Chat"}
                 </button>
               </div>
             </div>
@@ -301,8 +367,8 @@ export default function Home() {
           </div>
           <div>
             Support:{" "}
-            <a
-              href="mailto:buildoncloud.awsconsult@gmail.com"
+            
+              <a href="mailto:buildoncloud.awsconsult@gmail.com"
               className="text-blue-400 hover:text-blue-300 transition-colors"
             >
               buildoncloud.awsconsult@gmail.com

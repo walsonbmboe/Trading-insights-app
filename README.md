@@ -38,7 +38,7 @@ The AI-Powered Trading Insights Platform is a prototype trading system designed 
 
 ## 🚀 Features
 - **AI-Generated Market Insights**
-Powered by Amazon Bedrock (Nova Pro)
+Powered by Amazon Bedrock (Nova 2 Lite)
 Custom system prompts for financial reasoning
 Optimized for concise, actionable responses
 - **🔔 Automated Price Alerts**

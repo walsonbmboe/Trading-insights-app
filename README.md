@@ -37,32 +37,32 @@ The AI-Powered Trading Insights Platform is a prototype trading system designed 
 - **DevOps**: CloudFormation, GitHub Actions, Amplify CI/CD, CloudWatch 
 
 ## 🚀 Features
-**AI-Generated Market Insights**
+- **AI-Generated Market Insights**
 Powered by Amazon Bedrock (Nova Pro)
 Custom system prompts for financial reasoning
 Optimized for concise, actionable responses
-**🔔 Automated Price Alerts**
+- **🔔 Automated Price Alerts**
 EventBridge → Lambda → DynamoDB
 SES notifications when price thresholds are met
-**📊 Real-Time Portfolio & Wishlist**
+- **📊 Real-Time Portfolio & Wishlist**
 DynamoDB single-table design
 <10ms read performance
-**💬 Conversational AI Assistant**
+- **💬 Conversational AI Assistant**
 Amazon Lex with multilingual support
 Cross-region proxy architecture
-**🔐 Secure Authentication**
+- **🔐 Secure Authentication**
 AWS Cognito (MFA + JWT authorization)
 
 ## 🧠 System Architecture Details
-**Multi-Region AI Architecture**
+- **Multi-Region AI Architecture**
 Because Amazon Lex is not available in eu-north-1, the assistant is deployed in eu-west-1.
 To allow Lex to interact with core services, a proxy Lambda in eu-west-1 forwards and returns requests to the main Lambda in eu-north-1 via API Gateway + VPC endpoints.
-**Serverless Automation**
+- **Serverless Automation**
 EventBridge triggers Lambda jobs for:
 - Price checking
 - Alert management
 - Data cleanup tasks
-**Hybrid Storage Strategy**
+- **Hybrid Storage Strategy**
 - DynamoDB → portfolio/watchlist, real-time workloads
 - RDS PostgreSQL → historical fundamentals and structured relational data
 
@@ -107,15 +107,15 @@ aws lambda update-function-code \
 Create a .env file or use AWS Secrets Manager ( RECOMMENDED).
 Example variables:
 
-DB_HOST=
-DB_USER=
-DB_PASSWORD=
-DB_NAME=
-ALPHA_VANTAGE_API_KEY=
-COGNITO_POOL_ID=
-COGNITO_CLIENT_ID=
-BEDROCK_MODEL_ID=nova-pro-v1:0
-REGION=eu-north-1
+- DB_HOST=
+- DB_USER=
+- DB_PASSWORD=
+- DB_NAME=
+- ALPHA_VANTAGE_API_KEY=
+- COGNITO_POOL_ID=
+- COGNITO_CLIENT_ID=
+- BEDROCK_MODEL_ID=nova-pro-v1:0
+- REGION=eu-north-1
 
 For Lambdas:
 Use Lambda Environment Variables in console or IaC.
@@ -163,9 +163,9 @@ Result: A highly reliable, cost-efficient price alert engine that scales without
 - 🧮 Portfolio analytics + risk scoring
 
 ## 📬 Contact
-**Walson Baiye Mboe**
-**Cloud & Data Engineer | AWS Certified**
-**LinkedIn: [link]**
+- **Walson Baiye Mboe**
+- **Cloud & Data Engineer | AWS Certified**
+- **LinkedIn: [link]**
 
 ## 📈 Demo
 [Live Demo Link - Coming Soon]
